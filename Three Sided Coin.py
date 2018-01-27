@@ -15,7 +15,11 @@ TESTS = 10
 
 # Time steps for physics simulation in seconds
 # Smaller value = more accurate simulation, but more computationally expensive
-STEPSIZE = 1e-4
+STEPSIZE = 1/120.0
+
+# Substeps per Timestep
+# Higher value = more accurate simulation, but more computationally expensive
+SUBSTEPS = 50
 
 # Used to scale up centimeters to meters, while keeping accurate physics
 # Bullet physics doesn't work well with objects at cm scale
@@ -23,7 +27,7 @@ SCALE = 100
 
 SLOWDOWN = 0
 FORCE = 50
-DAMPING = 0.1
+DAMPING = 0.05
 CUTOFF = 2
 
 SHOW_DEBUG_GUI = False
@@ -38,6 +42,7 @@ p.setRealTimeSimulation(0)
 p.setTimeStep(STEPSIZE)
 p.resetDebugVisualizerCamera(80, 0, -50, [50, 25, 0])
 p.configureDebugVisualizer(p.COV_ENABLE_GUI, SHOW_DEBUG_GUI)
+p.setPhysicsEngineParameter(numSubSteps=SUBSTEPS)
 
 for test in range(TESTS):
     # Turn off rendering for building world
@@ -58,9 +63,9 @@ for test in range(TESTS):
     for i in range(OBJECTS):
         x = p.createMultiBody(baseMass=1, baseCollisionShapeIndex=colCylinder,
                               basePosition=[i % 10 * 10, i / 10 * 10, 5])
-        p.applyExternalForce(x, -1, [sysRand.randint(-FORCE/STEPSIZE, FORCE/STEPSIZE) * SCALE,
-                                     sysRand.randint(-FORCE/STEPSIZE, FORCE/STEPSIZE) * SCALE,
-                                     FORCE/STEPSIZE * SCALE],
+        p.applyExternalForce(x, -1, [sysRand.randint(-FORCE, FORCE) / STEPSIZE * SUBSTEPS * SCALE,
+                                     sysRand.randint(-FORCE, FORCE) / STEPSIZE * SUBSTEPS * SCALE,
+                                     FORCE / STEPSIZE * SUBSTEPS * SCALE],
                              [(sysRand.random() * 4 - 2) * SCALE,
                               (sysRand.random() * 4 - 2) * SCALE,
                               (sysRand.random() * 4 - 2) * SCALE],
@@ -73,7 +78,8 @@ for test in range(TESTS):
     for i in range(int(1/STEPSIZE * CUTOFF)):
         p.stepSimulation()
         time.sleep(SLOWDOWN)
-        
+
+        # Optional camera
         """
         camData = p.getDebugVisualizerCamera()
         viewMat = camData[2]
@@ -83,7 +89,6 @@ for test in range(TESTS):
                                    renderer=p.ER_BULLET_HARDWARE_OPENGL)
         keys = p.getKeyboardEvents()
         """
-        
 
     count = 0
     # First object is ground plane -> ignore
