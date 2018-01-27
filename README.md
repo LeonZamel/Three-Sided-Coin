@@ -16,4 +16,4 @@ python "Three Sided Coin.py"
 '''
 
 ## Example
-https://github.com/LeonZamel/Three-Sided-Coin/blob/master/example.PNG
+[example1](https://github.com/LeonZamel/Three-Sided-Coin/blob/master/example.PNG)
