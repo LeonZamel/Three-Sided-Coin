@@ -26,11 +26,11 @@ FORCE_APPLICATION_TIME = 0.05
 # Restitution i.e. "bouncyness", keep below 1
 # higher = "bouncier"
 # ratio of final to initial relative velocity between two objects after collision
-RESTITUTION = 0.7
+RESTITUTION = 0.65
 
 # Friction
 LATERAL_FRICTION = 0.5
-SPINNING_FRICTION = 0.001
+SPINNING_FRICTION = 0.0005
 ROLLING_FRICTION = 0.002
 
 # Distance between coins in cm, coins will touch with lower values,
@@ -184,5 +184,6 @@ currenttime = datetime.datetime.now().replace(microsecond=0)
 currenttime = currenttime.strftime("%Y-%m-%d %H-%M-%S" + ".csv")
 
 df = pd.DataFrame(data, index=[0])
+print(df)
 print("Writing data to file...")
 df.to_csv("TSC " + currenttime)
