@@ -8,7 +8,7 @@ import pandas as pd
 
 # Number of tests after which to stop
 # or enter very large number and end simulation via pressing 'u'
-TESTS = 10
+TESTS = 1000
 
 # Diameter of coin
 # Width is fixed as 1 cm
@@ -26,7 +26,7 @@ FORCE_APPLICATION_TIME = 0.05
 # Restitution i.e. "bouncyness", keep below 1
 # higher = "bouncier"
 # ratio of final to initial relative velocity between two objects after collision
-RESTITUTION = 0.65
+RESTITUTION = 0.6
 
 # Friction
 LATERAL_FRICTION = 0.5
@@ -77,8 +77,7 @@ data = {
     "Heads": 0,
     "Tails": 0,
     "Side": 0,
-    "Total counted": 0,
-    "Total thrown": 0,
+    "Total": 0,
     "Mass": MASS,
     "Force": FORCE,
     "Force application Time": FORCE_APPLICATION_TIME,
@@ -90,6 +89,18 @@ data = {
     "Linear damping": LINEAR_DAMPING,
     "Angular damping": ANGULAR_DAMPING
 }
+
+# Random distribution of SO(3)
+# see http://planning.cs.uiuc.edu/node198.html
+def generateRandomQuaternion():
+    u1 = sysRand.random()
+    u2 = sysRand.random()
+    u3 = sysRand.random()
+    w = math.sqrt(1 - u1) * math.sin(2 * math.pi * u2)
+    x = math.sqrt(1 - u1) * math.cos(2 * math.pi * u2)
+    y = math.sqrt(u1) * math.sin(2 * math.pi * u3)
+    z = math.sqrt(u1) * math.cos(2 * math.pi * u3)
+    return (x, y, z, w)
 
 sysRand = random.SystemRandom()
 
@@ -127,14 +138,14 @@ for test in range(TESTS):
     for i in range(OBJECTS):
         x = pybullet.createMultiBody(baseMass=MASS / 1000 * SCALE, baseCollisionShapeIndex=colCylinder,
                               basePosition=[i % 10 / 100 * DISTANCE_BETWEEN_COINS * SCALE, i / 10 / 100 * DISTANCE_BETWEEN_COINS * SCALE, 2], 
-                              baseOrientation=pybullet.getQuaternionFromEuler([sysRand.random() * math.pi * 4, sysRand.random() * math.pi * 4, sysRand.random() * math.pi * 4]))
+                              baseOrientation=generateRandomQuaternion())
 
         pybullet.changeDynamics(x, -1, linearDamping=LINEAR_DAMPING, angularDamping=ANGULAR_DAMPING, restitution=RESTITUTION,
                                 lateralFriction=LATERAL_FRICTION, spinningFriction=SPINNING_FRICTION, rollingFriction=ROLLING_FRICTION)
 
         pybullet.applyExternalForce(x, -1, [(sysRand.random() * 2 * FORCE - FORCE) * SCALE / STEPSIZE * FORCE_APPLICATION_TIME,
-                                     (sysRand.random() * 2 * FORCE - FORCE) * SCALE / STEPSIZE * FORCE_APPLICATION_TIME,
-                                     (sysRand.random() * FORCE + FORCE) * SCALE / STEPSIZE * FORCE_APPLICATION_TIME],
+                                            (sysRand.random() * 2 * FORCE - FORCE) * SCALE / STEPSIZE * FORCE_APPLICATION_TIME,
+                                            (sysRand.random() * 2 * FORCE - FORCE) * SCALE / STEPSIZE * FORCE_APPLICATION_TIME],
                              [(sysRand.random() * DIAMETER - DIAMETER / 2) / 100 * SCALE,
                               (sysRand.random() * DIAMETER - DIAMETER / 2) / 100 * SCALE,
                               (sysRand.random() * DIAMETER - DIAMETER / 2) / 100 * SCALE],
@@ -159,23 +170,22 @@ for test in range(TESTS):
         pos, angle = pybullet.getBasePositionAndOrientation(i)
         angle = pybullet.getEulerFromQuaternion(angle)
 
-        data["Total thrown"] += 1
+        data["Total"] += 1
         # Check how coin landed:
         angle = (angle[0] + 2 * math.pi) % (2 * math.pi)
 
         # Side
-        if math.pi / 2 - 0.3 <= angle <= math.pi / 2 + 0.3 or math.pi / 2 * 3 - 0.3 <= angle <= math.pi / 2 * 3 + 0.3:
+        if math.pi / 2 - (math.pi / 2 - 1.3) <= angle <= math.pi / 2 + (math.pi / 2 - 1.3) or math.pi / 2 * 3 - (math.pi / 2 - 1.3) <= angle <= math.pi / 2 * 3 + (math.pi / 2 - 1.3):
             data["Side"] += 1
-            data["Total counted"] += 1
+
         # Heads
         if angle <= 1.3 or 2 * math.pi - 1.3 <= angle:
             data["Heads"] += 1
-            data["Total counted"] += 1
+
         # Tails
         if math.pi - 1.3 <= angle <= math.pi + 1.3:
             data["Tails"] += 1
-            data["Total counted"] += 1
-        
+
     if(stopSim):
         break
 
@@ -184,6 +194,23 @@ currenttime = datetime.datetime.now().replace(microsecond=0)
 currenttime = currenttime.strftime("%Y-%m-%d %H-%M-%S" + ".csv")
 
 df = pd.DataFrame(data, index=[0])
+df = df[["Diameter",
+    "Thickness",
+    "Heads",
+    "Tails",
+    "Side",
+    "Total",
+    "Mass",
+    "Force",
+    "Force application Time",
+    "Restitution",
+    "Lateral friction",
+    "Spinning friction",
+    "Rolling friction",
+    "Distance between coins",
+    "Linear damping",
+    "Angular damping"]]
+    
 print(df)
 print("Writing data to file...")
 df.to_csv("TSC " + currenttime)
