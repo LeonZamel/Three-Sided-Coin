@@ -12,7 +12,7 @@ Edit parameters in "Three Sided Coin.py"
 
 run
 ```
-python "Three Sided Coin.py"
+python "Three-Sided Coin.py"
 ```
 
 ## Example
